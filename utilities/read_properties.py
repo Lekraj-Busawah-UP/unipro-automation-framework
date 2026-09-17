@@ -21,7 +21,13 @@ class ReadConfig:
     def get_browser():
         browser = config.get('common info', 'browser')
         return browser
-    
+
+    @staticmethod
+    def get_browsers():
+        # Supports a comma-separated list e.g. "chrome, firefox" for cross-browser runs
+        browsers = config.get('common info', 'browser')
+        return [b.strip().lower() for b in browsers.split(',') if b.strip()]
+
     @staticmethod
     def get_implicit_wait():
         implicit_wait = config.get('common info', 'implicit_wait')
