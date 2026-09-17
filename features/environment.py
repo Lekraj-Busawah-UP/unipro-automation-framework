@@ -13,13 +13,23 @@ logger = LogGen.loggen()
 SUPPORTED_BROWSERS = ('chrome', 'firefox')
 
 
+def _resolve_browser(context):
+    # -D browser=... (set by run.py's per-browser loop) takes priority over config.ini
+    browser_name = (context.config.userdata.get('browser') or ReadConfig.get_browsers()[0]).lower()
+    if browser_name not in SUPPORTED_BROWSERS:
+        raise ValueError(
+            f"Unsupported browser '{browser_name}'. Supported browsers: {', '.join(SUPPORTED_BROWSERS)}"
+        )
+    return browser_name
+
+
 def before_all(context):
     # Records which browser/OS produced this run for the Allure report
-    output_dir = 'allure-results'
+    output_dir = context.config.userdata.get('allure_outdir', 'allure-results')
     os.makedirs(output_dir, exist_ok=True)
 
     env_properties = {
-        'Browser': ReadConfig.get_browser().capitalize(),
+        'Browser': _resolve_browser(context).capitalize(),
         'Headless': ReadConfig.get_headless_mode(),
         'OS': f"{platform.system()} {platform.release()}",
         'Base_URL': ReadConfig.get_application_url(),
@@ -36,7 +46,7 @@ def before_feature(context, feature):
         context.base_url = ReadConfig.get_application_url()
 
         # 2. Setup browser    
-        browser_name = ReadConfig.get_browser().lower()
+        browser_name = _resolve_browser(context)
         headless_mode = ReadConfig.get_headless_mode() 
 
         options = None
@@ -58,11 +68,6 @@ def before_feature(context, feature):
                 options.add_argument("--width=1920")
                 options.add_argument("--height=1080")
             context.driver = webdriver.Firefox(options=options)
-
-        else:
-            raise ValueError(
-                f"Unsupported browser '{browser_name}'. Supported browsers: {', '.join(SUPPORTED_BROWSERS)}"
-            )
 
         context.headless_mode = headless_mode
 
