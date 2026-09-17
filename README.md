@@ -70,6 +70,18 @@ python run.py features/what_we_do.feature --tags=@smoke
 python run.py --dry-run
 ```
 
+**Cross-browser runs**
+If [configurations/config.ini](configurations/config.ini)'s `browser` value lists more than one browser (e.g. `browser = chrome, firefox`), `run.py` automatically repeats the same command once per browser, sequentially, with no extra flags needed:
+
+```bash
+# With browser = chrome, firefox in config.ini, this runs on Chrome, then Firefox
+python run.py --tags=@homepage
+```
+
+Each browser gets its own Allure results folder (`allure-results-chrome`, `allure-results-firefox`, ...) so reports never mix between browsers. With only one browser configured, results still go to the single `allure-results` folder as before. See [Configuration](#4-configuration) and [Manually Generating/Serving Reports](#manually-generatingserving-reports) below.
+
+> Note: this only applies to local runs via `run.py`. The CI pipeline always runs against the first browser listed in `config.ini`, regardless of how many are configured (see [CI/CD & Reporting](#cicd--reporting)).
+
 **Option B: Using Native Behave Commands**
 If you prefer running raw commands without the helper script:
 
@@ -112,8 +124,22 @@ Test settings live in [configurations/config.ini](configurations/config.ini):
 ```ini
 [common info]
 baseURL = https://www.unipro.io/
-browser = chrome      # chrome | firefox
+browser = chrome      # chrome | firefox, or a comma-separated list for cross-browser runs (e.g. chrome, firefox)
 headless = false      # true | false
+```
+
+### Manually Generating/Serving Reports
+`python run.py` prompts you to serve each generated report at the end of a run. To do it manually instead (e.g. after a run you didn't serve immediately), target the relevant results folder:
+
+```bash
+# Quick view (temporary local server, opens in your browser)
+allure serve allure-results
+allure serve allure-results-chrome
+allure serve allure-results-firefox
+
+# Persistent static report (e.g. for sharing)
+allure generate allure-results-chrome --clean -o allure-report-chrome
+allure open allure-report-chrome
 ```
 
 ## CI/CD & Reporting
