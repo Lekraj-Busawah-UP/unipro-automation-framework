@@ -9,6 +9,8 @@ reports/
 allure-results/
 allure-results-*/
 allure-report/
+allure-report-*/
+allure-report/
 screenshots/
 *.log
 
