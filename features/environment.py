@@ -4,10 +4,31 @@ from utilities.read_properties import ReadConfig
 from utilities.custom_logger import LogGen
 from behave import *
 import os
+import platform
 import allure
 
 # Initialize the logger once
 logger = LogGen.loggen()
+
+SUPPORTED_BROWSERS = ('chrome', 'firefox')
+
+
+def before_all(context):
+    # Records which browser/OS produced this run for the Allure report
+    output_dir = 'allure-results'
+    os.makedirs(output_dir, exist_ok=True)
+
+    env_properties = {
+        'Browser': ReadConfig.get_browser().capitalize(),
+        'Headless': ReadConfig.get_headless_mode(),
+        'OS': f"{platform.system()} {platform.release()}",
+        'Base_URL': ReadConfig.get_application_url(),
+    }
+
+    with open(os.path.join(output_dir, 'environment.properties'), 'w') as f:
+        for key, value in env_properties.items():
+            f.write(f"{key}={value}\n")
+
 
 def before_feature(context, feature):
     try:
@@ -38,11 +59,10 @@ def before_feature(context, feature):
                 options.add_argument("--height=1080")
             context.driver = webdriver.Firefox(options=options)
 
-        # Fallback to Chrome if undefined
         else:
-            options = webdriver.ChromeOptions()
-            options.add_argument("--headless")
-            context.driver = webdriver.Chrome(options=options)
+            raise ValueError(
+                f"Unsupported browser '{browser_name}'. Supported browsers: {', '.join(SUPPORTED_BROWSERS)}"
+            )
 
         context.headless_mode = headless_mode
 
